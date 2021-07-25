@@ -5,9 +5,8 @@ metadata:
   labels:
     {{- include "tile38.labels" . | nindent 4 }}
 spec:
-  {{- if not .Values.autoscaling.enabled }}
+  serviceName: {{ printf "%s-headless" (include "tile38.fullname" .) }}
   replicas: {{ .Values.replicaCount }}
-  {{- end }}
   selector:
     matchLabels:
       {{- include "tile38.selectorLabels" . | nindent 6 }}
@@ -24,13 +23,8 @@ spec:
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "tile38.serviceAccountName" . }}
-      securityContext:
-        {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
         - name: {{ .Chart.Name }}
-          securityContext:
-            {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command:
@@ -38,9 +32,9 @@ spec:
             - --metrics-addr
             - 127.0.0.1:4321
             - --protected-mode
-            - {{ .Values.flags.protectedMode }}
+            - {{ if .Values.flags.protectedMode }} "yes" {{ else }} "no" {{ end }}
             - --appendonly
-            - {{ .Values.flags.appendOnly }}
+            - {{ if .Values.flags.appendOnly }} "yes" {{ else }} "no" {{ end }}
           ports:
             - name: monitoring
               containerPort: 4321
