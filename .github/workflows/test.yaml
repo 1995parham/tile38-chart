@@ -1,7 +1,10 @@
 ---
 name: test
 
-on: push
+on:
+  push:
+    paths:
+      - 'charts/**'
 
 jobs:
   lint-test:
