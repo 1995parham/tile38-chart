@@ -8,8 +8,8 @@ metadata:
     "helm.sh/hook": test
 spec:
   containers:
-    - name: wget
-      image: busybox
-      command: ['wget']
-      args: ['{{ include "tile38.fullname" . }}:{{ .Values.service.port }}']
+    - name: tile38-cli
+      image: tile38/tile38
+      command: ['tile38-cli']
+      args: [-h, '{{ include "tile38.fullname" . }}', -p, '{{ .Values.service.port }}', ping]
   restartPolicy: Never
