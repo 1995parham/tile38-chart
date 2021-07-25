@@ -6,3 +6,9 @@
 ## Introduction
 
 Helm chart for [tile38](https://github.com/tidwall/tile38).
+
+```sh
+helm repo add tile38 https://1995parham.me/tile38-chart
+
+helm show chart tile38/tile38
+```
