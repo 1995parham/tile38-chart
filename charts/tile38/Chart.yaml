@@ -4,7 +4,7 @@ icon: https://tile38.com/img/logo.svg
 description: A Helm chart for Kubernetes
 
 maintainers:
-  - name: Parham Alvani
+  - name: 1995parham
     url: https://github.com/1995parham
     email: parham.alvani@gmail.com
 
