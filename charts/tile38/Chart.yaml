@@ -3,6 +3,11 @@ name: tile38
 icon: https://tile38.com/img/logo.svg
 description: A Helm chart for Kubernetes
 
+maintainers:
+  - name: Parham Alvani
+    url: https://github.com/1995parham
+    email: parham.alvani@gmail.com
+
 # A chart can be either an 'application' or a 'library' chart.
 #
 # Application charts are a collection of templates that can be packaged into versioned archives
