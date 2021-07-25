@@ -1,5 +1,6 @@
 apiVersion: v2
 name: tile38
+icon: https://tile38.com/img/logo.svg
 description: A Helm chart for Kubernetes
 
 # A chart can be either an 'application' or a 'library' chart.
