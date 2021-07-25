@@ -23,6 +23,9 @@ jobs:
         with:
           version: v3.4.0
 
+      - name: lint
+        run: helm lint --strict tile38
+
       - name: run chart-releaser
         uses: helm/chart-releaser-action@v1.2.0
         with:
