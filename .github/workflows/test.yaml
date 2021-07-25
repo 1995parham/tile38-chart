@@ -9,6 +9,8 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
       - name: set up helm
         uses: azure/setup-helm@v1
@@ -19,14 +21,23 @@ jobs:
         with:
           python-version: 3.7
 
-      - name: set up chart-testing
+      - name: Set up chart-testing
         uses: helm/chart-testing-action@v2.1.0
 
-      - name: run chart-testing (lint)
-        run: ct lint --all
+      - name: Run chart-testing (list-changed)
+        id: list-changed
+        run: |
+          changed=$(ct list-changed)
+          if [[ -n "$changed" ]]; then
+            echo "::set-output name=changed::true"
+          fi
 
-      - name: create kind cluster
+      - name: Run chart-testing (lint)
+        run: ct lint
+
+      - name: Create kind cluster
         uses: helm/kind-action@v1.2.0
+        if: steps.list-changed.outputs.changed == 'true'
 
-      - name: run chart-testing (install)
-        run: ct install --all
+      - name: Run chart-testing (install)
+        run: ct install
