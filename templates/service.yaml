@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "tile38.fullname" . }}
+  labels:
+    {{- include "tile38.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: tile
+      protocol: TCP
+      name: tile
+    - port: {{ .Values.service.monitoring }}
+      targetPort: monitoring
+      protocol: TCP
+      name: monitoring
+  selector:
+    {{- include "tile38.selectorLabels" . | nindent 4 }}
