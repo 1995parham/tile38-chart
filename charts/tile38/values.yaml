@@ -46,6 +46,9 @@ tolerations: []
 
 affinity: {}
 
+serviceMonitor:
+  enabled: false
+
 flags:
   appendOnly: false
   protectedMode: false
