@@ -2,6 +2,21 @@ apiVersion: v1
 entries:
   tile38:
   - apiVersion: v2
+    appVersion: 1.25.2
+    created: "2021-08-18T06:24:43.015330303Z"
+    description: A Helm chart for Kubernetes
+    digest: d5714d06af00eb9c2f30e627bbefbf4c8f918f3bad85e669edd97f7acfa1c0fb
+    icon: https://tile38.com/img/logo.svg
+    maintainers:
+    - email: parham.alvani@gmail.com
+      name: 1995parham
+      url: https://github.com/1995parham
+    name: tile38
+    type: application
+    urls:
+    - https://github.com/1995parham/tile38-chart/releases/download/tile38-0.2.3/tile38-0.2.3.tgz
+    version: 0.2.3
+  - apiVersion: v2
     appVersion: 1.25.1
     created: "2021-07-26T17:27:45.994940262Z"
     description: A Helm chart for Kubernetes
@@ -31,4 +46,4 @@ entries:
     urls:
     - https://github.com/1995parham/tile38-chart/releases/download/tile38-0.2.1/tile38-0.2.1.tgz
     version: 0.2.1
-generated: "2021-07-26T17:27:45.994950262Z"
+generated: "2021-08-18T06:24:43.015342803Z"
