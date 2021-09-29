@@ -11,6 +11,6 @@ maintainers:
 
 type: application
 
-version: 0.2.4
+version: 0.2.5
 
-appVersion: "1.25.3"
+appVersion: "1.26.0"
