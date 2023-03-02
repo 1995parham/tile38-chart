@@ -68,3 +68,13 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
+  volumeClaimTemplates:
+    - metadata:
+        name: {{ .Values.server.storage.name }}
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        storageClassName: {{ .Values.server.storage.class }}
+        resources:
+          requests:
+            storage: {{ .Values.server.storage.size }}
