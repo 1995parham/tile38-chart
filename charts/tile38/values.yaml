@@ -17,10 +17,10 @@ fullnameOverride: ""
 
 podAnnotations: {}
 
-server: 
-  storage:
+server:
+  storage: 
     name: data
-    class: block-storage-high-speed
+    type: block-storage-high-speed
     size: 1Gi
 
 service:
