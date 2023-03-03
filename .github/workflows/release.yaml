@@ -1,7 +1,10 @@
 ---
 name: release
 
-on: release
+on:
+  push:
+    tags:
+      - '*'
 
 jobs:
   release:
