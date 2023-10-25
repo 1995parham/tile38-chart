@@ -2,8 +2,7 @@
 apiVersion: v2
 name: tile38
 icon: https://tile38.com/img/logo.svg
-description: A Helm chart for Kubernetes
-
+description: Ultra Fast Geospatial Database & Geofencing Server
 maintainers:
   - name: 1995parham
     url: https://github.com/1995parham
