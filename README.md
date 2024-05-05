@@ -1,7 +1,9 @@
-# Tile38 Chart
+<div align="center">
+  <h1>Tile38 Chart</h1> 
 
-![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/1995parham/tile38-chart/test.yaml?label=test&logo=github&style=flat-square&branch=main)
-![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/1995parham/tile38-chart/release.yaml?label=release&logo=github&style=flat-square&branch=main)
+  ![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/1995parham/tile38-chart/test.yaml?label=test&logo=github&style=for-the-badge&branch=main)
+  ![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/1995parham/tile38-chart/release.yaml?label=release&logo=github&style=for-the-badge&branch=main)
+</div>
 
 ## Introduction
 
