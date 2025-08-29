@@ -20,7 +20,7 @@ podAnnotations: {}
 server:
   storage:
     name: data
-    type: block-storage-high-speed
+    type: ""
     size: 1Gi
 
 service:
