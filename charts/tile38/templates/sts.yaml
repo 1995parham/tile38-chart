@@ -31,11 +31,11 @@ spec:
           command:
             - tile38-server
             - --metrics-addr
-            - 127.0.0.1:4321
+            - "127.0.0.1:4321"
             - --protected-mode
-            - {{ if .Values.flags.protectedMode }}yes{{ else }}no{{ end }}
+            - "{{ if .Values.flags.protectedMode }}yes{{ else }}no{{ end }}"
             - --appendonly
-            - {{ if .Values.flags.appendOnly }}yes{{ else }}no{{ end }}
+            - "{{ if .Values.flags.appendOnly }}yes{{ else }}no{{ end }}"
           ports:
             - name: monitoring
               containerPort: 4321
