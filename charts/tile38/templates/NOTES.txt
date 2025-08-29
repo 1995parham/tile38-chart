@@ -1,1 +1,10 @@
-Have fun with tile38.
+{{- $fullName := include "tile38.fullname" . -}}
+{{- $namespace := .Release.Namespace -}}
+{{- $servicePort := .Values.service.port -}}
+
+Tile38 can be accessed within the cluster on port {{ $servicePort }} at {{ $fullName }}.{{ $namespace }}.svc.cluster.local
+
+To connect to Tile38 from outside the cluster, you can use port-forwarding:
+  kubectl port-forward --namespace {{ $namespace }} svc/{{ $fullName }} {{ $servicePort }}:{{ $servicePort }}
+
+Then you can connect to Tile38 at localhost:{{ $servicePort }}
