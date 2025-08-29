@@ -3,6 +3,13 @@ apiVersion: v2
 name: tile38
 icon: https://tile38.com/img/logo.svg
 description: Ultra Fast Geospatial Database & Geofencing Server
+home: https://tile38.com/
+sources:
+  - https://github.com/tidwall/tile38
+keywords:
+  - tile38
+  - geofencing
+  - geospatial
 maintainers:
   - name: 1995parham
     url: https://github.com/1995parham
