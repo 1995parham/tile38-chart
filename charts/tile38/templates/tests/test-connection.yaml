@@ -11,5 +11,5 @@ spec:
     - name: tile38-cli
       image: tile38/tile38
       command: ['tile38-cli']
-      args: [-h, '{{ include "tile38.fullname" . }}', -p, '{{ .Values.service.port }}', ping]
+      args: ['-h', '{{ include "tile38.fullname" . }}', '-p', '{{ .Values.service.port | toString }}', 'ping']
   restartPolicy: Never

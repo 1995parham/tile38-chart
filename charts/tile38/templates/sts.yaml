@@ -5,7 +5,7 @@ metadata:
   labels:
     {{- include "tile38.labels" . | nindent 4 }}
 spec:
-  serviceName: {{ printf "%s-headless" (include "tile38.fullname" .) }}
+  serviceName: {{ include "tile38.fullname" . }}-headless
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
@@ -19,6 +19,7 @@ spec:
       labels:
         {{- include "tile38.selectorLabels" . | nindent 8 }}
     spec:
+      serviceAccountName: {{ include "tile38.serviceAccountName" . }}
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
@@ -32,9 +33,9 @@ spec:
             - --metrics-addr
             - 127.0.0.1:4321
             - --protected-mode
-            - {{ if .Values.flags.protectedMode }} "yes" {{ else }} "no" {{ end }}
+            - {{ if .Values.flags.protectedMode }}yes{{ else }}no{{ end }}
             - --appendonly
-            - {{ if .Values.flags.appendOnly }} "yes" {{ else }} "no" {{ end }}
+            - {{ if .Values.flags.appendOnly }}yes{{ else }}no{{ end }}
           ports:
             - name: monitoring
               containerPort: 4321
@@ -77,7 +78,7 @@ spec:
       spec:
         accessModes:
           - ReadWriteOnce
-        storageClassName: {{ .Values.server.storage.class }}
+        storageClassName: {{ .Values.server.storage.type }}
         resources:
           requests:
             storage: {{ .Values.server.storage.size }}
