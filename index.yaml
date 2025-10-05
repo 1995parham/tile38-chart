@@ -2,6 +2,28 @@ apiVersion: v1
 entries:
   tile38:
   - apiVersion: v2
+    appVersion: 1.36.5
+    created: "2025-10-05T17:21:20.10686258Z"
+    description: Ultra Fast Geospatial Database & Geofencing Server
+    digest: be05193b6ebbedcf08571a892ed83d69e461280f26b0dd6fd74ddc5858618c68
+    home: https://tile38.com/
+    icon: https://tile38.com/img/logo.svg
+    keywords:
+    - tile38
+    - geofencing
+    - geospatial
+    maintainers:
+    - email: parham.alvani@gmail.com
+      name: 1995parham
+      url: https://github.com/1995parham
+    name: tile38
+    sources:
+    - https://github.com/tidwall/tile38
+    type: application
+    urls:
+    - https://github.com/1995parham/tile38-chart/releases/download/tile38-0.3.10/tile38-0.3.10.tgz
+    version: 0.3.10
+  - apiVersion: v2
     appVersion: 1.36.2
     created: "2025-09-05T15:57:50.363360894Z"
     description: Ultra Fast Geospatial Database & Geofencing Server
@@ -247,4 +269,4 @@ entries:
     urls:
     - https://github.com/1995parham/tile38-chart/releases/download/tile38-0.2.1/tile38-0.2.1.tgz
     version: 0.2.1
-generated: "2025-09-05T15:57:50.363446395Z"
+generated: "2025-10-05T17:21:20.106991762Z"
