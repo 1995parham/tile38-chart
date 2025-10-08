@@ -11,6 +11,17 @@ spec:
       {{- include "tile38.selectorLabels" . | nindent 6 }}
   policyTypes:
     - Ingress
+    - Egress
   ingress:
     {{- toYaml .Values.networkPolicy.from | nindent 4 }}
+  egress:
+    - to:
+      - podSelector: {}
+    - to:
+      - namespaceSelector: {}
+      ports:
+      - protocol: TCP
+        port: 53
+      - protocol: UDP
+        port: 53
 {{- end }}

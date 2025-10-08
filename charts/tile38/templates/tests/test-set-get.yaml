@@ -9,7 +9,7 @@ metadata:
 spec:
   containers:
     - name: tile38-cli
-      image: tile38/tile38
+      image: "tile38/tile38:{{ .Chart.AppVersion }}"
       command:
         - sh
         - -c
