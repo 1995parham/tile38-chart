@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "tile38.fullname" . }}-test-geospatial"
+  labels:
+    {{- include "tile38.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+spec:
+  containers:
+    - name: tile38-cli
+      image: tile38/tile38
+      command:
+        - sh
+        - -c
+        - |
+          set -ex
+          tile38-cli -h {{ include "tile38.fullname" . }} -p {{ .Values.service.port | toString }} SET fleet truck1 POINT 33.7490 -84.3880
+          VALUE=$(tile38-cli -h {{ include "tile38.fullname" . }} -p {{ .Values.service.port | toString }} GET fleet truck1)
+          if ! echo "$VALUE" | grep -q "POINT(33.749 -84.388)"; then
+            echo "Unexpected value for fleet truck1: $VALUE"
+            exit 1
+          fi
+  restartPolicy: Never
