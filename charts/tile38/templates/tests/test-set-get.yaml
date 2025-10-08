@@ -15,10 +15,10 @@ spec:
         - -c
         - |
           set -ex
-          tile38-cli -h {{ include "tile38.fullname" . }} -p {{ .Values.service.port | toString }} SET mykey myvalue
-          VALUE=$(tile38-cli -h {{ include "tile38.fullname" . }} -p {{ .Values.service.port | toString }} GET mykey)
-          if [ "$VALUE" != "myvalue" ]; then
-            echo "Unexpected value for mykey: $VALUE"
+          tile38-cli -h {{ include "tile38.fullname" . }} -p {{ .Values.service.port | toString }} SET mykey myid STRING "myvalue"
+          VALUE=$(tile38-cli -h {{ include "tile38.fullname" . }} -p {{ .Values.service.port | toString }} GET mykey myid)
+          if ! echo "$VALUE" | grep -q "myvalue"; then
+            echo "Unexpected value for mykey myid: $VALUE"
             exit 1
           fi
   restartPolicy: Never
