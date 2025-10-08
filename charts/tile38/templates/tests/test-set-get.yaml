@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "tile38.fullname" . }}-test-set-get"
+  labels:
+    {{- include "tile38.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+spec:
+  containers:
+    - name: tile38-cli
+      image: tile38/tile38
+      command:
+        - sh
+        - -c
+        - |
+          set -ex
+          tile38-cli -h {{ include "tile38.fullname" . }} -p {{ .Values.service.port | toString }} SET mykey myvalue
+          VALUE=$(tile38-cli -h {{ include "tile38.fullname" . }} -p {{ .Values.service.port | toString }} GET mykey)
+          if [ "$VALUE" != "myvalue" ]; then
+            echo "Unexpected value for mykey: $VALUE"
+            exit 1
+          fi
+  restartPolicy: Never

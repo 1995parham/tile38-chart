@@ -9,17 +9,26 @@ image:
   repository: tile38/tile38
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: ""
+  tag: "1.36.5"
 
 imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
+
+podSecurityContext:
+  fsGroup: 1000
+
+securityContext:
+  runAsUser: 1000
+  runAsNonRoot: true
 
 podAnnotations: {}
 
 server:
   storage:
     name: data
+    # The type of storage to use. If you want to use the default StorageClass,
+    # leave this empty.
     type: ""
     size: 1Gi
 
@@ -29,17 +38,16 @@ service:
   monitoring: 4321
 
 resources:
-  {}
   # We usually recommend not to specify default resources and to leave this as a conscious
   # choice for the user. This also increases chances charts run on environments with little
   # resources, such as Minikube. If you do want to specify resources, uncomment the following
   # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  # limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  # requests:
-  #   cpu: 100m
-  #   memory: 128Mi
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
 
 autoscaling:
   enabled: false
@@ -71,6 +79,12 @@ serviceMonitor:
   honorLabels: false
   metricRelabelings: []
   relabelings: []
+
+
+networkPolicy:
+  enabled: false
+  from:
+    - podSelector: {}
 
 flags:
   appendOnly: false
