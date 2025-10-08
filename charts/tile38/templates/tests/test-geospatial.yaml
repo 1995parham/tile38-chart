@@ -17,7 +17,7 @@ spec:
           set -ex
           tile38-cli -h {{ include "tile38.fullname" . }} -p {{ .Values.service.port | toString }} SET fleet truck1 POINT 33.7490 -84.3880
           VALUE=$(tile38-cli -h {{ include "tile38.fullname" . }} -p {{ .Values.service.port | toString }} GET fleet truck1)
-          if ! echo "$VALUE" | grep -q "POINT(33.749 -84.388)"; then
+          if ! echo "$VALUE" | grep -q "[33.749,-84.388]"; then
             echo "Unexpected value for fleet truck1: $VALUE"
             exit 1
           fi
