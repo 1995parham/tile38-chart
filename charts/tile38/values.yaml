@@ -9,7 +9,7 @@ image:
   repository: tile38/tile38
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "1.36.5"
+  tag: ""
 
 imagePullSecrets: []
 nameOverride: ""
