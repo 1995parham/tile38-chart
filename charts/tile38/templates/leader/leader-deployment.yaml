@@ -59,8 +59,8 @@ spec:
             - "{{ .Values.leader.service.tilePort }}"
             - -d
             - "/data"
-            - --metrics-addr
             {{- if .Values.serviceMonitor.enabled }}
+            - --metrics-addr
             - "0.0.0.0:{{ .Values.leader.service.monitoringPort }}"
             {{- end }}
             {{- range $key, $value := .Values.leader.extraArgs }}
