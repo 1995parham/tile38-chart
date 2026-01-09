@@ -1,0 +1,13 @@
+{{- if .Values.leader.config.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "tile38.fullname" . }}-leader-configs
+  labels:
+    {{- include "tile38.labels" . | nindent 4 }}
+    role: leader
+data:
+  # Tile38 expects the config file to be called "config" in JSON format inside the data directory.
+  config: |-
+{{ .Values.leader.config.configs | toJson | nindent 4 }}
+{{- end }}

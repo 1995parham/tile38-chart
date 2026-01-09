@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "tile38.fullname" . }}-leader
+  labels:
+    {{- include "tile38.labels" . | nindent 4 }}
+    {{- with .Values.leader.service.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    role: leader
+  {{- with .Values.leader.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.leader.service.type }}
+  selector:
+    {{ include "tile38.selectorLabels" .}}
+    role: leader
+  ports:
+    - name: tile
+      port: {{ .Values.leader.service.tilePort }}
+      targetPort: tile
+    - name: monitoring
+      port: {{ .Values.leader.service.monitoringPort }}
+      targetPort: monitoring
