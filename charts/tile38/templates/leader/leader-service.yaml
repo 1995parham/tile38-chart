@@ -15,7 +15,7 @@ metadata:
 spec:
   type: {{ .Values.leader.service.type }}
   selector:
-    {{ include "tile38.selectorLabels" .}}
+    {{- include "tile38.selectorLabels" . | nindent 4 }}
     role: leader
   ports:
     - name: tile

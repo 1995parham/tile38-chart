@@ -10,18 +10,23 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      {{ include "tile38.selectorLabels" . }}
+      {{- include "tile38.selectorLabels" . | nindent 6 }}
       role: leader
+  {{- if .Values.leader.updateStrategy }}
+  updateStrategy: 
+    {{- toYaml .Values.leader.updateStrategy | nindent 4 }}
+  {{- end }}
   template:
     metadata:
       labels:
-        {{ include "tile38.labels" . }}
+        {{- include "tile38.labels" . | nindent 8 }}
         role: leader
       {{- with .Values.global.podAnnotations }}
       annotations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
     spec:
+      serviceAccountName: {{ include "tile38.serviceAccountName" . }}
       {{- with .Values.global.podSecurityContext }}
       securityContext:
         {{- toYaml . | nindent 8 }}
@@ -51,7 +56,8 @@ spec:
           securityContext:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          command: tile38-server
+          command: 
+            - tile38-server
           args:
             - -h
             - "0.0.0.0"

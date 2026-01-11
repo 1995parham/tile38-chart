@@ -9,5 +9,5 @@ metadata:
 data:
   # Tile38 expects the config file to be called "config" in JSON format inside the data directory.
   config: |-
-{{ .Values.leader.config.configs | toJson | nindent 4 }}
+{{- .Values.leader.config.configs | toJson | nindent 4 }}
 {{- end }}
