@@ -60,3 +60,37 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{/*
+Define url of follow_host for follower
+*/}}
+{{- define "tile38.follower.followHost" -}}
+{{- default (printf "%s-leader" (include "tile38.fullname" .)) .Values.followers.config.follow_host  }}
+{{- end }}
+
+
+{{/*
+Define url of follow_port for follower
+*/}}
+{{- define "tile38.follower.followPort" -}}
+{{- default .Values.leader.service.tilePort .Values.followers.config.follow_port }}
+{{- end }}
+
+
+{{- define "tile38.follower.configJson" }}
+  {{- $followHost := (printf "%s" (include "tile38.follower.followHost" .) ) }}
+  {{- $followPort :=  (include "tile38.follower.followPort" . | int) }}
+  {{- $config := dict "follow_host" }}
+  {{- range $key, $value := .Values.followers.config.configs }}
+    {{- if eq $key "follow_host" }}
+      {{- $_ := set $config "follow_host" $followHost }}
+    {{- else if eq $key "follow_port"}}
+      {{- $_ := set $config "follow_port" $followPort }}
+    {{- else }}
+      {{- $_ := set $config $key $value }}
+    {{- end }}
+  {{- end }}
+{{- $config | toJson | print }}
+{{- end }}
+
+
