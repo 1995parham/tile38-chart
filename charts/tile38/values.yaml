@@ -95,7 +95,7 @@ followers:
     enabled: true
     size: 10Gi
     accessModes: ["ReadWriteOnce"]
-    storageClass: ""                # e.g. "standard" or leave empty for default
+    storageClassName: ""                # e.g. "standard" or leave empty for default
     keepOnDelete: true
   
   resources:
