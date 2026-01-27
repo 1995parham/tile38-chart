@@ -70,7 +70,7 @@ spec:
             - "/data"
             {{- if .Values.serviceMonitor.enabled }}
             - --metrics-addr
-            - "0.0.0.0:{{ .Values.leader.service.monitoringPort }}"
+            - "0.0.0.0:{{ .Values.followers.service.monitoringPort }}"
             {{- end }}
             {{- range $key, $value := .Values.followers.extraArgs }}
               - {{ printf "--%s=%s" (kebabcase $key) $value }}
