@@ -149,7 +149,8 @@ spec:
         {{- if .Values.followers.persistence.storageClassName }}
         storageClassName: {{ .Values.followers.persistence.storageClassName | quote }}
         {{- end }}
-        accessModes: {{ .Values.followers.persistence.accessModes }}
+        accessModes:
+          - {{ .Values.followers.persistence.accessMode }}
         resources:
           requests:
             storage: {{ .Values.followers.persistence.size }}
