@@ -12,9 +12,9 @@ spec:
     matchLabels:
       {{- include "tile38.selectorLabels" . | nindent 6 }}
       role: leader
-  {{- if .Values.leader.updateStrategy }}
-  updateStrategy: 
-    {{- toYaml .Values.leader.updateStrategy | nindent 4 }}
+  {{- if .Values.leader.rollOutStrategy }}
+  strategy: 
+    {{- toYaml .Values.leader.rollOutStrategy | nindent 4 }}
   {{- end }}
   template:
     metadata:

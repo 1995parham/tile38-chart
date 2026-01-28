@@ -16,8 +16,12 @@ spec:
     matchLabels:
       {{- include "tile38.selectorLabels" . | nindent 6}}
       role: follower
-  {{- if and $persistence .Values.followers.updateStrategy }}
-  updateStrategy: {{- toYaml .Values.followers.updateStrategy | nindent 4 }}
+  {{- if and $persistence .Values.followers.rolloutStrategy }}
+  updateStrategy: 
+    {{- toYaml .Values.followers.rolloutStrategy | nindent 4 }}
+  {{- else if and (not $persistence) (.Values.followers.rolloutStrategy)}}
+  strategy:
+    {{- toYaml .Values.followers.rolloutStrategy | nindent 4 }}
   {{- end }}
   template:
     metadata:

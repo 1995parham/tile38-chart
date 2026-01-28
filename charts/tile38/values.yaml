@@ -69,7 +69,8 @@ followers:
   enabled: true
   # how many follower replicas to run (Deployment replicas)
   replicaCount: 2
-  updateStrategy: {}
+  # updateStrategy for persistent.enabled = true, strategy for persistent.enabled = false
+  rolloutStrategy: {}
   # follower config used to create /data/config via ConfigMap
   config:
     enabled: true # if false, will use default values
@@ -91,6 +92,7 @@ followers:
       # e.g. cloud.google.com/load-balancer-type: "Internal"
     headless: false             # if true creates a headless followers-headless service for DNS per pod
   
+  # if enabled, StatefulSet will be created, else Deployment
   persistence:
     enabled: true
     size: 10Gi
