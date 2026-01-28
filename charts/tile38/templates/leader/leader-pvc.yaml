@@ -16,7 +16,7 @@ spec:
   resources:
     requests:
       storage: {{ .Values.leader.persistence.size }}
-  {{- if .Values.leader.persistence.storageClass }}
-  storageClassName: {{ .Values.leader.persistence.storageClass }}
+  {{- if .Values.leader.persistence.storageClassName }}
+  storageClassName: {{ .Values.leader.persistence.storageClassName }}
   {{- end }}
 {{- end }}

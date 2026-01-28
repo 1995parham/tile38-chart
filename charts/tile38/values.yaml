@@ -42,7 +42,7 @@ leader:
     # If empty existingClaim, chart will create a PVC named <fullname>-leader-pvc
     size: 10Gi
     accessMode: ReadWriteOnce
-    storageClass: ""                # e.g. "standard" or leave empty for default
+    storageClassName: ""                # e.g. "standard" or leave empty for default
     keepOnDelete: true              # when true adds helm.sh/resource-policy: keep annotation
   resources:
     # Default resource limits for Tile38. Adjust these based on your workload requirements.
@@ -96,7 +96,7 @@ followers:
   persistence:
     enabled: true
     size: 10Gi
-    accessModes: ["ReadWriteOnce"]
+    accessMode: "ReadWriteOnce"
     storageClassName: ""                # e.g. "standard" or leave empty for default
     keepOnDelete: true
   
