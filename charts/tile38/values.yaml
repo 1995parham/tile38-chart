@@ -1,9 +1,6 @@
 ---
 # Default values for tile38.
 # This is a YAML-formatted file.
-# Declare variables to be passed into your templates.
-
-replicaCount: 1
 
 image:
   repository: tile38/tile38
@@ -11,47 +8,133 @@ image:
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""
 
-imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
-podSecurityContext:
-  fsGroup: 1000
+# leader settings
+leader:
+  replicaCount: 1
+  rolloutStrategy: {}
+  # leader config (if using mounted config file)
+  config:
+    enabled: true # if false, will use default values
+    # See all available configs from https://tile38.com/topics/configuration#configuration-file
+    configs:
+      protectedMode: "no"
 
-securityContext:
-  runAsUser: 1000
-  runAsNonRoot: true
+  # service customization for leader
+  service:
+    type: ClusterIP              # ClusterIP | NodePort | LoadBalancer | ExternalName
+    tilePort: 9851
+    monitoringPort: 4321
+    # add custom labels to the Service metadata.labels
+    labels: {}
+      # e.g. app-tier: backend
+    # add custom annotations to the Service metadata.annotations
+    annotations: {}
+      # e.g. service.alpha.kubernetes.io/tolerate-unready-endpoints: "true"
+  persistence:
+    enabled: true
+    # If `existingClaim` is set, helm will use it instead of creating new PVC resource.
+    # Useful when you pre-provision a PVC or use dynamic provisioning with a specific PVC name.
+    existingClaim: ""               # example: "tile38-prod-leader-pvc"
 
-podAnnotations: {}
+    # If empty existingClaim, chart will create a PVC named <fullname>-leader-pvc
+    size: 10Gi
+    accessMode: ReadWriteOnce
+    storageClassName: ""                # e.g. "standard" or leave empty for default
+    keepOnDelete: true              # when true adds helm.sh/resource-policy: keep annotation
+  resources:
+    # Default resource limits for Tile38. Adjust these based on your workload requirements.
+    # For production environments with heavy geospatial operations, consider increasing these values.
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  
+  # -- A list of flags to pass to `tile38-server` command. Items must be camelcase. Helm will turn them to kebabcase style.
+  # See all available flags in https://tile38.com/topics/configuration#configuration-file
+  extraFlags: []
 
-server:
-  storage:
-    name: data
-    # The type of storage to use. If you want to use the default StorageClass,
-    # leave this empty.
-    type: ""
-    size: 1Gi
+  # -- A map of arguments and values to pass to the `tile38-server` command. Keys must be camelcase. Helm will turn them to kebabcase style.
+  # See all available args in https://tile38.com/topics/configuration#configuration-file
+  extraArgs: {}
 
-service:
-  type: ClusterIP
-  port: 9851
-  monitoring: 4321
+  
 
-resources:
-  # Default resource limits for Tile38. Adjust these based on your workload requirements.
-  # For production environments with heavy geospatial operations, consider increasing these values.
-  limits:
-    cpu: 100m
-    memory: 128Mi
-  requests:
-    cpu: 100m
-    memory: 128Mi
+# followers settings
+followers:
+  enabled: true
+  # how many follower replicas to run (Deployment replicas)
+  replicaCount: 2
+  # rolloutStrategy for persistent.enabled = true, strategy for persistent.enabled = false
+  rolloutStrategy: {}
+  # follower config used to create /data/config via ConfigMap
+  config:
+    enabled: true # if false, will use default values
+    configs:
+      follow_host: ""             # defaults to <fullname>-leader when empty
+      follow_port: 9851
+      leaderauth: ""              # password for leader if required (prefer Secret in production)
+      read_only: true
+      protectedMode: "no"
 
-nodeSelector: {}
+  # service customization for followers
+  service:
+    type: ClusterIP             # ClusterIP | NodePort | LoadBalancer
+    tilePort: 9851
+    monitoringPort: 4321
+    labels: {}
+      # e.g. app-tier: readers
+    annotations: {}
+      # e.g. cloud.google.com/load-balancer-type: "Internal"
+    headless: false             # if true creates a headless followers-headless service for DNS per pod
+  
+  # if enabled, StatefulSet will be created, else Deployment
+  persistence:
+    enabled: true
+    size: 10Gi
+    accessMode: "ReadWriteOnce"
+    storageClassName: ""                # e.g. "standard" or leave empty for default
+    keepOnDelete: true
+  
+  resources:
+    # Default resource limits for Tile38. Adjust these based on your workload requirements.
+    # For production environments with heavy geospatial operations, consider increasing these values.
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  
+  # -- A list of flags to pass to `tile38-server` command. Items must be camelcase. Helm will turn them to kebabcase style.
+  # See all available flags in https://tile38.com/topics/configuration#configuration-file
+  extraFlags: []
 
-tolerations: []
+  # -- A map of arguments and values to pass to the `tile38-server` command. Keys must be camelcase. Helm will turn them to kebabcase style.
+  # See all available args in https://tile38.com/topics/configuration#configuration-file
+  extraArgs: {}
 
-affinity: {}
+global:
+  podSecurityContext:
+    fsGroup: 1000
+
+  securityContext:
+    runAsUser: 1000
+    runAsNonRoot: true
+
+  podAnnotations: {}
+
+  imagePullSecrets: []
+
+  nodeSelector: {}
+
+  tolerations: []
+
+  affinity: {}
 
 serviceAccount:
   # Specifies whether a service account should be created
@@ -77,6 +160,3 @@ networkPolicy:
   from:
     - podSelector: {}
 
-flags:
-  appendOnly: false
-  protectedMode: false

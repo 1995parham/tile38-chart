@@ -1,0 +1,139 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "tile38.fullname" . }}-leader
+  labels:
+    {{- include "tile38.labels" . | nindent 4 }}
+    role: leader
+spec:
+  # Tile38 doesn't support multi master so replicas hardcoded.
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "tile38.selectorLabels" . | nindent 6 }}
+      role: leader
+  {{- if .Values.leader.rollOutStrategy }}
+  strategy: 
+    {{- toYaml .Values.leader.rollOutStrategy | nindent 4 }}
+  {{- end }}
+  template:
+    metadata:
+      labels:
+        {{- include "tile38.labels" . | nindent 8 }}
+        role: leader
+      {{- with .Values.global.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      serviceAccountName: {{ include "tile38.serviceAccountName" . }}
+      {{- with .Values.global.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.leader.config.enabled }}
+      # We need to copy config before docker image runs.
+      initContainers:
+        - name: copy-config
+          image: busybox:1.36
+          command: ["sh", "-c", "cp /config /data/config"]
+          volumeMounts:
+            - name: leader-config-file
+              mountPath: /config
+              subPath: config
+            - name: config
+              mountPath: /data
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- with .Values.global.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          command: 
+            - tile38-server
+          args:
+            - -h
+            - "0.0.0.0"
+            - -p
+            - "{{ .Values.leader.service.tilePort }}"
+            - -d
+            - "/data"
+            {{- if .Values.serviceMonitor.enabled }}
+            - --metrics-addr
+            - "0.0.0.0:{{ .Values.leader.service.monitoringPort }}"
+            {{- end }}
+            {{- range $key, $value := .Values.leader.extraArgs }}
+              - {{ printf "--%s=%s" (kebabcase $key) $value }}
+            {{- end }}
+            {{- range .Values.leader.extraFlags }}
+              - --{{ kebabcase . }}
+            {{- end }}
+          ports:
+            - name: monitoring
+              containerPort: {{ .Values.leader.service.monitoringPort }}
+              protocol: TCP
+            - name: tile
+              containerPort: {{ .Values.leader.service.tilePort }}
+              protocol: TCP
+          livenessProbe:
+            tcpSocket:
+              port: tile
+            initialDelaySeconds: 30
+            timeoutSeconds: 1
+            periodSeconds: 10
+          readinessProbe:
+            tcpSocket:
+              port: tile
+            initialDelaySeconds: 10
+            timeoutSeconds: 1
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.leader.resources | nindent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            {{- if .Values.leader.config.enabled }}
+            - name: config
+              mountPath: /data/config
+              subPath: config
+              readOnly: false
+            {{- end }}
+      {{- with .Values.global.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.global.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.global.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        {{- if .Values.leader.persistence.enabled }}
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ .Values.leader.persistence.existingClaim | default (printf "%s-leader-pvc" (include "tile38.fullname" .)) }}
+        {{- else }}
+        - name: data
+          emptyDir: {}
+        {{- end }}
+        {{- if .Values.leader.config.enabled }}
+        - name: leader-config-file
+          configMap:
+            name: {{ include "tile38.fullname" . }}-leader-configs
+            items:
+              - key: config
+                path: config
+            defaultMode: 0666
+        - name: config
+          emptyDir: {}
+        {{- end }}

@@ -1,10 +1,15 @@
 {{- $fullName := include "tile38.fullname" . -}}
 {{- $namespace := .Release.Namespace -}}
-{{- $servicePort := .Values.service.port -}}
+{{- $leaderServicePort := .Values.leader.service.tilePort -}}
+{{- $followerServicePort := .Values.followers.service.tilePort -}}
 
-Tile38 can be accessed within the cluster on port {{ $servicePort }} at {{ $fullName }}.{{ $namespace }}.svc.cluster.local
+
+Tile38 Leader can be accessed within the cluster on port {{ $leaderServicePort }} at {{ $fullName }}-leader.{{ $namespace }}.svc.cluster.local
+{{- if .Values.followers.enabled }}
+Followers are accessible on port {{ $followerServicePort }} at {{ $fullName }}-followers.{{ $namespace }}.svc.cluster.local
+{{- end }}
 
 To connect to Tile38 from outside the cluster, you can use port-forwarding:
-  kubectl port-forward --namespace {{ $namespace }} svc/{{ $fullName }} {{ $servicePort }}:{{ $servicePort }}
+  kubectl port-forward --namespace {{ $namespace }} svc/{{ $fullName }}-leader {{ $leaderServicePort }}:{{ $leaderServicePort }}
 
-Then you can connect to Tile38 at localhost:{{ $servicePort }}
+Then you can connect to Tile38 at localhost:{{ $leaderServicePort }}

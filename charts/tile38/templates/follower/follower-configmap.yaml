@@ -1,0 +1,13 @@
+{{- if .Values.followers.enabled }}
+{{- if .Values.followers.config.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "tile38.fullname" . }}-followers-config
+  labels:
+    {{- include "tile38.labels" . | nindent 4 }}
+data:
+  config: |-
+{{- include "tile38.follower.configJson" . | nindent 4}}
+{{- end }}
+{{- end }}

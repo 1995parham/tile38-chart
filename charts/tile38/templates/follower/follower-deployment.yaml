@@ -1,0 +1,158 @@
+{{- if .Values.followers.enabled }}
+{{- $persistence := .Values.followers.persistence.enabled }}
+apiVersion: apps/v1
+kind: {{ if $persistence }}StatefulSet{{ else }}Deployment{{ end }}
+metadata:
+  name: {{ include "tile38.fullname" . }}-followers
+  labels:
+    {{- include "tile38.labels" . | nindent 4 }}
+    role: follower
+spec:
+  {{- if $persistence }}
+  serviceName: {{ include "tile38.fullname" . }}-headless
+  {{- end }}
+  replicas: {{ .Values.followers.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "tile38.selectorLabels" . | nindent 6}}
+      role: follower
+  {{- if and $persistence .Values.followers.rolloutStrategy }}
+  updateStrategy: 
+    {{- toYaml .Values.followers.rolloutStrategy | nindent 4 }}
+  {{- else if and (not $persistence) (.Values.followers.rolloutStrategy)}}
+  strategy:
+    {{- toYaml .Values.followers.rolloutStrategy | nindent 4 }}
+  {{- end }}
+  template:
+    metadata:
+      labels:
+        {{- include "tile38.labels" . | nindent 8 }}
+        role: follower
+      {{- with .Values.global.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      serviceAccountName: {{ include "tile38.serviceAccountName" . }}
+      {{- with .Values.global.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.followers.config.enabled }}
+      # We need to copy config before docker image runs.
+      initContainers:
+        - name: copy-config
+          image: busybox:1.36
+          command: ["sh", "-c", "cp /config /data/config"]
+          volumeMounts:
+            - name: follower-config-file
+              mountPath: /config
+              subPath: config
+            - name: config
+              mountPath: /data
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- with .Values.global.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          command: 
+            - tile38-server
+          args:
+            - -h
+            - "0.0.0.0"
+            - -p
+            - "{{ .Values.followers.service.tilePort }}"
+            - -d
+            - "/data"
+            {{- if .Values.serviceMonitor.enabled }}
+            - --metrics-addr
+            - "0.0.0.0:{{ .Values.followers.service.monitoringPort }}"
+            {{- end }}
+            {{- range $key, $value := .Values.followers.extraArgs }}
+              - {{ printf "--%s=%s" (kebabcase $key) $value }}
+            {{- end }}
+            {{- range .Values.followers.extraFlags }}
+              - --{{ kebabcase . }}
+            {{- end }}
+          ports:
+            - name: monitoring
+              containerPort: {{ .Values.followers.service.monitoringPort }}
+              protocol: TCP
+            - name: tile
+              containerPort: {{ .Values.followers.service.tilePort }}
+              protocol: TCP
+          livenessProbe:
+            tcpSocket:
+              port: tile
+            initialDelaySeconds: 30
+            timeoutSeconds: 1
+            periodSeconds: 10
+          readinessProbe:
+            tcpSocket:
+              port: tile
+            initialDelaySeconds: 10
+            timeoutSeconds: 1
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.followers.resources | nindent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          {{- if .Values.followers.config.enabled }}
+            - name: config
+              mountPath: /data/config
+              subPath: config
+              readOnly: false
+          {{- end }}
+      {{- with .Values.global.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.global.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.global.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        {{- if .Values.followers.config.enabled }}
+        - name: follower-config-file
+          configMap:
+            name: {{ include "tile38.fullname" . }}-followers-config
+            items:
+              - key: config
+                path: config
+        - name: config
+          emptyDir: {}
+        {{- end }}
+  {{- if not $persistence }}
+        - name: data
+          emptyDir: {}
+  {{- else }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+        labels:
+          {{- include "tile38.labels" . | nindent 10 }}
+          role: follower
+      spec:
+        {{- if .Values.followers.persistence.storageClassName }}
+        storageClassName: {{ .Values.followers.persistence.storageClassName | quote }}
+        {{- end }}
+        accessModes:
+          - {{ .Values.followers.persistence.accessMode }}
+        resources:
+          requests:
+            storage: {{ .Values.followers.persistence.size }}
+  {{- end }}
+{{- end }}

@@ -1,0 +1,22 @@
+{{- if and .Values.leader.persistence.enabled (not .Values.leader.persistence.existingClaim)  }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "tile38.fullname" . }}-leader-pvc
+  labels:
+    {{- include "tile38.labels" . | nindent 4 }}
+    role: leader
+  annotations:
+    {{- if .Values.leader.persistence.keepOnDelete }}
+    "helm.sh/resource-policy": keep
+    {{- end }}
+spec:
+  accessModes:
+    - {{ .Values.leader.persistence.accessMode }}
+  resources:
+    requests:
+      storage: {{ .Values.leader.persistence.size }}
+  {{- if .Values.leader.persistence.storageClassName }}
+  storageClassName: {{ .Values.leader.persistence.storageClassName }}
+  {{- end }}
+{{- end }}
