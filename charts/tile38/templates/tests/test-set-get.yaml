@@ -16,6 +16,6 @@ spec:
         - -c
         - |
           echo "==> Writing data to leader" && \
-          tile38-cli -h {{ include "tile38.fullname" . }}-leader -p 9851 SET fleet truck1 POINT 10 10 && \
+          tile38-cli -h {{ include "tile38.fullname" . }}-leader -p {{ .Values.leader.service.tilePort }} SET fleet truck1 POINT 10 10 && \
           echo "==> Reading data from leader" && \
-          tile38-cli -h {{ include "tile38.fullname" . }}-leader -p 9851 GET fleet truck1
+          tile38-cli -h {{ include "tile38.fullname" . }}-leader -p {{ .Values.leader.service.tilePort }} GET fleet truck1
