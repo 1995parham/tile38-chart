@@ -84,7 +84,7 @@ Define url of follow_port for follower
   {{- $_ := set $config "follow_host" $followHost }}
   {{- $_ := set $config "follow_port" $followPort }}
   {{- range $key, $value := .Values.followers.config.configs }}
-    {{- if and (not eq $key "follow_host") (not eq $key "follow_port") }}
+    {{- if and (ne $key "follow_host") (ne $key "follow_port") }}
       {{- $_ := set $config $key $value }}
     {{- end }}
   {{- end }}
