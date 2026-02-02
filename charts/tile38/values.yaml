@@ -17,7 +17,7 @@ leader:
   rolloutStrategy: {}
   # leader config (if using mounted config file)
   config:
-    enabled: true # if false, will use default values
+    enabled: true  # if false, will use default values
     # See all available configs from https://tile38.com/topics/configuration#configuration-file
     configs:
       protectedMode: "no"
@@ -53,7 +53,7 @@ leader:
     requests:
       cpu: 100m
       memory: 128Mi
-  
+
   # -- A list of flags to pass to `tile38-server` command. Items must be camelcase. Helm will turn them to kebabcase style.
   # See all available flags in https://tile38.com/topics/configuration#configuration-file
   extraFlags: []
@@ -61,8 +61,6 @@ leader:
   # -- A map of arguments and values to pass to the `tile38-server` command. Keys must be camelcase. Helm will turn them to kebabcase style.
   # See all available args in https://tile38.com/topics/configuration#configuration-file
   extraArgs: {}
-
-  
 
 # followers settings
 followers:
@@ -73,7 +71,7 @@ followers:
   rolloutStrategy: {}
   # follower config used to create /data/config via ConfigMap
   config:
-    enabled: true # if false, will use default values
+    enabled: true  # if false, will use default values
     configs:
       follow_host: ""             # defaults to <fullname>-leader when empty
       follow_port: 9851
@@ -90,16 +88,16 @@ followers:
       # e.g. app-tier: readers
     annotations: {}
       # e.g. cloud.google.com/load-balancer-type: "Internal"
-    headless: false             # if true creates a headless followers-headless service for DNS per pod
-  
+    headless: false  # if true creates a headless followers-headless service for DNS per pod
+
   # if enabled, StatefulSet will be created, else Deployment
   persistence:
     enabled: true
     size: 10Gi
     accessMode: "ReadWriteOnce"
-    storageClassName: ""                # e.g. "standard" or leave empty for default
+    storageClassName: ""  # e.g. "standard" or leave empty for default
     keepOnDelete: true
-  
+
   resources:
     # Default resource limits for Tile38. Adjust these based on your workload requirements.
     # For production environments with heavy geospatial operations, consider increasing these values.
@@ -109,7 +107,7 @@ followers:
     requests:
       cpu: 100m
       memory: 128Mi
-  
+
   # -- A list of flags to pass to `tile38-server` command. Items must be camelcase. Helm will turn them to kebabcase style.
   # See all available flags in https://tile38.com/topics/configuration#configuration-file
   extraFlags: []
@@ -154,9 +152,7 @@ serviceMonitor:
   metricRelabelings: []
   relabelings: []
 
-
 networkPolicy:
   enabled: false
   from:
     - podSelector: {}
-
