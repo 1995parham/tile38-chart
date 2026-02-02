@@ -20,5 +20,5 @@ spec:
           tile38-cli -h {{ include "tile38.fullname" . }}-leader -p {{ .Values.leader.service.tilePort }} SET fleet truck1 POINT 10 10 && \
           sleep 10 && \
           echo "==> Reading data from follower" && \
-            tile38-cli -h {{ include "tile38.fullname" . }}-followers -p {{ .Values.leader.service.tilePort }} GET fleet truck1
+            tile38-cli -h {{ include "tile38.fullname" . }}-followers -p {{ .Values.followers.service.tilePort }} GET fleet truck1
 {{- end }}
