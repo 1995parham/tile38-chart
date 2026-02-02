@@ -47,6 +47,10 @@ spec:
       initContainers:
         - name: copy-config
           image: busybox:1.36
+          {{- with .Values.global.securityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           command: ["sh", "-c", "cp /config /data/config"]
           volumeMounts:
             - name: follower-config-file
