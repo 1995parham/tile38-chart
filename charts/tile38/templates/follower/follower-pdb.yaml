@@ -1,0 +1,17 @@
+{{- if and .Values.followers.enabled .Values.followers.pdb.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "tile38.fullname" . }}-followers
+  labels:
+    {{- include "tile38.componentLabels" (dict "ctx" . "component" "follower") | nindent 4 }}
+spec:
+  {{- if .Values.followers.pdb.minAvailable }}
+  minAvailable: {{ .Values.followers.pdb.minAvailable }}
+  {{- else if .Values.followers.pdb.maxUnavailable }}
+  maxUnavailable: {{ .Values.followers.pdb.maxUnavailable }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "tile38.componentSelectorLabels" (dict "ctx" . "component" "follower") | nindent 6 }}
+{{- end }}
