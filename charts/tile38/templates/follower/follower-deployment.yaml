@@ -1,40 +1,55 @@
 {{- if .Values.followers.enabled }}
 {{- $persistence := .Values.followers.persistence.enabled }}
+{{- $hasLeaderSecret := .Values.followers.config.existingSecret }}
 apiVersion: apps/v1
 kind: {{ if $persistence }}StatefulSet{{ else }}Deployment{{ end }}
 metadata:
   name: {{ include "tile38.fullname" . }}-followers
   labels:
-    {{- include "tile38.labels" . | nindent 4 }}
-    role: follower
+    {{- include "tile38.componentLabels" (dict "ctx" . "component" "follower") | nindent 4 }}
 spec:
   {{- if $persistence }}
   serviceName: {{ include "tile38.fullname" . }}-headless
   {{- end }}
   replicas: {{ .Values.followers.replicaCount }}
+  revisionHistoryLimit: {{ .Values.followers.revisionHistoryLimit }}
   selector:
     matchLabels:
-      {{- include "tile38.selectorLabels" . | nindent 6}}
-      role: follower
+      {{- include "tile38.componentSelectorLabels" (dict "ctx" . "component" "follower") | nindent 6 }}
   {{- if and $persistence .Values.followers.rolloutStrategy }}
-  updateStrategy: 
+  updateStrategy:
     {{- toYaml .Values.followers.rolloutStrategy | nindent 4 }}
-  {{- else if and (not $persistence) (.Values.followers.rolloutStrategy)}}
+  {{- else if and (not $persistence) .Values.followers.rolloutStrategy }}
   strategy:
     {{- toYaml .Values.followers.rolloutStrategy | nindent 4 }}
   {{- end }}
   template:
     metadata:
       labels:
-        {{- include "tile38.labels" . | nindent 8 }}
-        role: follower
-      {{- with .Values.global.podAnnotations }}
-      annotations:
+        {{- include "tile38.componentLabels" (dict "ctx" . "component" "follower") | nindent 8 }}
+        {{- with .Values.global.podLabels }}
         {{- toYaml . | nindent 8 }}
-      {{- end }}
+        {{- end }}
+        {{- with .Values.followers.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/follower/follower-configmap.yaml") . | sha256sum }}
+        {{- with .Values.global.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.followers.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
     spec:
       serviceAccountName: {{ include "tile38.serviceAccountName" . }}
-      {{- with .Values.global.podSecurityContext }}
+      automountServiceAccountToken: {{ .Values.serviceAccount.automount }}
+      terminationGracePeriodSeconds: {{ .Values.followers.terminationGracePeriodSeconds }}
+      {{- with .Values.followers.priorityClassName }}
+      priorityClassName: {{ . }}
+      {{- end }}
+      {{- $podSec := default .Values.global.podSecurityContext .Values.followers.podSecurityContext }}
+      {{- with $podSec }}
       securityContext:
         {{- toYaml . | nindent 8 }}
       {{- end }}
@@ -46,12 +61,32 @@ spec:
       # We need to copy config before docker image runs.
       initContainers:
         - name: copy-config
-          image: busybox:1.36
-          {{- with .Values.global.securityContext }}
+          image: "{{ .Values.initContainerImage.repository }}:{{ .Values.initContainerImage.tag }}"
+          imagePullPolicy: {{ .Values.initContainerImage.pullPolicy }}
+          {{- $ctrSec := default .Values.global.securityContext .Values.followers.securityContext }}
+          {{- with $ctrSec }}
           securityContext:
             {{- toYaml . | nindent 12 }}
           {{- end }}
+          {{- if $hasLeaderSecret }}
+          # When using an external Secret for leaderauth, the init container
+          # templates it into the JSON config file at startup.
+          env:
+            - name: LEADERAUTH
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.followers.config.existingSecret }}
+                  key: {{ .Values.followers.config.existingSecretKey }}
+          command:
+            - sh
+            - -c
+            - |
+              set -eu
+              # Strip trailing '}' and inject leaderauth, then close the JSON object.
+              sed 's/}$/,"leaderauth":"'"${LEADERAUTH}"'"}/' /config > /data/config
+          {{- else }}
           command: ["sh", "-c", "cp /config /data/config"]
+          {{- end }}
           volumeMounts:
             - name: follower-config-file
               mountPath: /config
@@ -63,11 +98,12 @@ spec:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          {{- with .Values.global.securityContext }}
+          {{- $ctrSec := default .Values.global.securityContext .Values.followers.securityContext }}
+          {{- with $ctrSec }}
           securityContext:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          command: 
+          command:
             - tile38-server
           args:
             - -h
@@ -81,10 +117,10 @@ spec:
             - "0.0.0.0:{{ .Values.followers.service.monitoringPort }}"
             {{- end }}
             {{- range $key, $value := .Values.followers.extraArgs }}
-              - {{ printf "--%s=%s" (kebabcase $key) $value }}
+            - {{ printf "--%s=%s" (kebabcase $key) $value }}
             {{- end }}
             {{- range .Values.followers.extraFlags }}
-              - --{{ kebabcase . }}
+            - --{{ kebabcase . }}
             {{- end }}
           ports:
             - name: monitoring
@@ -93,18 +129,36 @@ spec:
             - name: tile
               containerPort: {{ .Values.followers.service.tilePort }}
               protocol: TCP
+          {{- if .Values.followers.livenessProbe.enabled }}
           livenessProbe:
             tcpSocket:
               port: tile
-            initialDelaySeconds: 30
-            timeoutSeconds: 1
-            periodSeconds: 10
+            initialDelaySeconds: {{ .Values.followers.livenessProbe.initialDelaySeconds }}
+            timeoutSeconds: {{ .Values.followers.livenessProbe.timeoutSeconds }}
+            periodSeconds: {{ .Values.followers.livenessProbe.periodSeconds }}
+            failureThreshold: {{ .Values.followers.livenessProbe.failureThreshold }}
+            successThreshold: {{ .Values.followers.livenessProbe.successThreshold }}
+          {{- end }}
+          {{- if .Values.followers.readinessProbe.enabled }}
           readinessProbe:
             tcpSocket:
               port: tile
-            initialDelaySeconds: 10
-            timeoutSeconds: 1
-            periodSeconds: 10
+            initialDelaySeconds: {{ .Values.followers.readinessProbe.initialDelaySeconds }}
+            timeoutSeconds: {{ .Values.followers.readinessProbe.timeoutSeconds }}
+            periodSeconds: {{ .Values.followers.readinessProbe.periodSeconds }}
+            failureThreshold: {{ .Values.followers.readinessProbe.failureThreshold }}
+            successThreshold: {{ .Values.followers.readinessProbe.successThreshold }}
+          {{- end }}
+          {{- if .Values.followers.startupProbe.enabled }}
+          startupProbe:
+            tcpSocket:
+              port: tile
+            initialDelaySeconds: {{ .Values.followers.startupProbe.initialDelaySeconds }}
+            timeoutSeconds: {{ .Values.followers.startupProbe.timeoutSeconds }}
+            periodSeconds: {{ .Values.followers.startupProbe.periodSeconds }}
+            failureThreshold: {{ .Values.followers.startupProbe.failureThreshold }}
+            successThreshold: {{ .Values.followers.startupProbe.successThreshold }}
+          {{- end }}
           resources:
             {{- toYaml .Values.followers.resources | nindent 12 }}
           volumeMounts:
@@ -114,18 +168,24 @@ spec:
             - name: config
               mountPath: /data/config
               subPath: config
-              readOnly: false
           {{- end }}
-      {{- with .Values.global.nodeSelector }}
+      {{- $nodeSelector := default .Values.global.nodeSelector .Values.followers.nodeSelector }}
+      {{- with $nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.global.affinity }}
+      {{- $affinity := default .Values.global.affinity .Values.followers.affinity }}
+      {{- with $affinity }}
       affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.global.tolerations }}
+      {{- $tolerations := default .Values.global.tolerations .Values.followers.tolerations }}
+      {{- with $tolerations }}
       tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.followers.topologySpreadConstraints }}
+      topologySpreadConstraints:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       volumes:
@@ -136,6 +196,7 @@ spec:
             items:
               - key: config
                 path: config
+            defaultMode: 0644
         - name: config
           emptyDir: {}
         {{- end }}
@@ -147,8 +208,11 @@ spec:
     - metadata:
         name: data
         labels:
-          {{- include "tile38.labels" . | nindent 10 }}
-          role: follower
+          {{- include "tile38.componentLabels" (dict "ctx" . "component" "follower") | nindent 10 }}
+        {{- with .Values.followers.persistence.annotations }}
+        annotations:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
       spec:
         {{- if .Values.followers.persistence.storageClassName }}
         storageClassName: {{ .Values.followers.persistence.storageClassName | quote }}

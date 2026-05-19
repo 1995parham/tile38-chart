@@ -4,8 +4,7 @@ kind: Service
 metadata:
   name: {{ include "tile38.fullname" . }}-followers
   labels:
-    {{- include "tile38.labels" . | nindent 4 }}
-    role: follower
+    {{- include "tile38.componentLabels" (dict "ctx" . "component" "follower") | nindent 4 }}
     {{- with .Values.followers.service.labels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
@@ -14,15 +13,16 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
 spec:
-  type: {{ .Values.followers.service.type  }}
+  type: {{ .Values.followers.service.type }}
   selector:
-    {{- include "tile38.selectorLabels" . | nindent 4}}
-    role: follower
+    {{- include "tile38.componentSelectorLabels" (dict "ctx" . "component" "follower") | nindent 4 }}
   ports:
     - name: tile
       port: {{ .Values.followers.service.tilePort }}
       targetPort: tile
+      protocol: TCP
     - name: monitoring
       port: {{ .Values.followers.service.monitoringPort }}
       targetPort: monitoring
+      protocol: TCP
 {{- end }}

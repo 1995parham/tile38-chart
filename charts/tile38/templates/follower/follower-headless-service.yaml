@@ -1,11 +1,10 @@
-{{- if .Values.followers.enabled }}
+{{- if and .Values.followers.enabled (include "tile38.followers.headlessEnabled" .) }}
 apiVersion: v1
 kind: Service
 metadata:
   name: {{ include "tile38.fullname" . }}-headless
   labels:
-    {{- include "tile38.labels" . | nindent 4 }}
-    role: follower
+    {{- include "tile38.componentLabels" (dict "ctx" . "component" "follower") | nindent 4 }}
     {{- with .Values.followers.service.labels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
@@ -16,12 +15,15 @@ metadata:
 spec:
   type: ClusterIP
   clusterIP: None
+  # publishNotReadyAddresses lets the StatefulSet pods resolve their own DNS
+  # while still initializing (replication catch-up); required for stable
+  # cluster behavior.
+  publishNotReadyAddresses: true
   ports:
     - port: {{ .Values.followers.service.tilePort }}
       targetPort: tile
       protocol: TCP
       name: tile
   selector:
-    {{- include "tile38.selectorLabels" . | nindent 4 }}
-    role: follower
+    {{- include "tile38.componentSelectorLabels" (dict "ctx" . "component" "follower") | nindent 4 }}
 {{- end }}
