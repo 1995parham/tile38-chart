@@ -4,21 +4,37 @@ metadata:
   name: "{{ include "tile38.fullname" . }}-test-geospatial"
   labels:
     {{- include "tile38.labels" . | nindent 4 }}
+    app.kubernetes.io/component: test
   annotations:
     "helm.sh/hook": test
+    "helm.sh/hook-weight": "3"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
 spec:
+  restartPolicy: Never
+  {{- with .Values.global.imagePullSecrets }}
+  imagePullSecrets:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.global.podSecurityContext }}
+  securityContext:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   containers:
     - name: tile38-cli
       image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+      imagePullPolicy: {{ .Values.image.pullPolicy }}
+      {{- with .Values.global.securityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       command:
         - sh
         - -c
         - |
-          set -ex
+          set -eux
           tile38-cli -h {{ include "tile38.fullname" . }}-leader -p {{ .Values.leader.service.tilePort | toString }} SET fleet truck1 POINT 33.7490 -84.3880
           VALUE=$(tile38-cli -h {{ include "tile38.fullname" . }}-leader -p {{ .Values.leader.service.tilePort | toString }} GET fleet truck1)
-          if ! echo "$VALUE" | grep -q "[33.749,-84.388]"; then
+          if ! echo "$VALUE" | grep -q "\[33.749,-84.388\]"; then
             echo "Unexpected value for fleet truck1: $VALUE"
             exit 1
           fi
-  restartPolicy: Never

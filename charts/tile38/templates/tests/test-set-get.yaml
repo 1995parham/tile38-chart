@@ -4,18 +4,35 @@ metadata:
   name: {{ include "tile38.fullname" . }}-test-set-get
   labels:
     {{- include "tile38.labels" . | nindent 4 }}
+    app.kubernetes.io/component: test
   annotations:
     "helm.sh/hook": test
+    "helm.sh/hook-weight": "2"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
 spec:
   restartPolicy: Never
+  {{- with .Values.global.imagePullSecrets }}
+  imagePullSecrets:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.global.podSecurityContext }}
+  securityContext:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   containers:
     - name: tile38-cli
       image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+      imagePullPolicy: {{ .Values.image.pullPolicy }}
+      {{- with .Values.global.securityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       command:
         - sh
         - -c
         - |
-          echo "==> Writing data to leader" && \
-          tile38-cli -h {{ include "tile38.fullname" . }}-leader -p {{ .Values.leader.service.tilePort }} SET fleet truck1 POINT 10 10 && \
-          echo "==> Reading data from leader" && \
+          set -eu
+          echo "==> Writing data to leader"
+          tile38-cli -h {{ include "tile38.fullname" . }}-leader -p {{ .Values.leader.service.tilePort }} SET fleet truck1 POINT 10 10
+          echo "==> Reading data from leader"
           tile38-cli -h {{ include "tile38.fullname" . }}-leader -p {{ .Values.leader.service.tilePort }} GET fleet truck1

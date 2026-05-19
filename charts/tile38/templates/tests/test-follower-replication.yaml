@@ -5,20 +5,44 @@ metadata:
   name: {{ include "tile38.fullname" . }}-test-follower-replication
   labels:
     {{- include "tile38.labels" . | nindent 4 }}
+    app.kubernetes.io/component: test
   annotations:
     "helm.sh/hook": test
+    "helm.sh/hook-weight": "4"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
 spec:
   restartPolicy: Never
+  {{- with .Values.global.imagePullSecrets }}
+  imagePullSecrets:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.global.podSecurityContext }}
+  securityContext:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
   containers:
     - name: tile38-cli
       image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+      imagePullPolicy: {{ .Values.image.pullPolicy }}
+      {{- with .Values.global.securityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       command:
         - sh
         - -c
         - |
-          echo "==> Waiting for follower replication" && \
-          tile38-cli -h {{ include "tile38.fullname" . }}-leader -p {{ .Values.leader.service.tilePort }} SET fleet truck1 POINT 10 10 && \
-          sleep 10 && \
-          echo "==> Reading data from follower" && \
-            tile38-cli -h {{ include "tile38.fullname" . }}-followers -p {{ .Values.followers.service.tilePort }} GET fleet truck1
+          set -eu
+          echo "==> Writing data to leader"
+          tile38-cli -h {{ include "tile38.fullname" . }}-leader -p {{ .Values.leader.service.tilePort }} SET fleet truck1 POINT 10 10
+          echo "==> Waiting for follower replication"
+          for i in $(seq 1 30); do
+            if tile38-cli -h {{ include "tile38.fullname" . }}-followers -p {{ .Values.followers.service.tilePort }} GET fleet truck1 | grep -q '10'; then
+              echo "==> Replication succeeded after ${i}s"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "==> Replication did not propagate within 30s"
+          exit 1
 {{- end }}
