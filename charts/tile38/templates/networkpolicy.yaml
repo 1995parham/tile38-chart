@@ -15,13 +15,15 @@ spec:
   ingress:
     {{- toYaml .Values.networkPolicy.from | nindent 4 }}
   egress:
+    # Followers need to reach the leader pod within the namespace.
     - to:
-      - podSelector: {}
+        - podSelector: {}
+    # DNS resolution.
     - to:
-      - namespaceSelector: {}
+        - namespaceSelector: {}
       ports:
-      - protocol: TCP
-        port: 53
-      - protocol: UDP
-        port: 53
+        - protocol: TCP
+          port: 53
+        - protocol: UDP
+          port: 53
 {{- end }}
