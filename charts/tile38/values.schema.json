@@ -1,0 +1,234 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "title": "Tile38 Helm chart values",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "image",
+    "initContainerImage",
+    "leader",
+    "followers",
+    "global",
+    "serviceAccount"
+  ],
+  "definitions": {
+    "image": {
+      "type": "object",
+      "required": ["repository", "pullPolicy"],
+      "properties": {
+        "repository": { "type": "string", "minLength": 1 },
+        "tag": { "type": "string" },
+        "pullPolicy": {
+          "type": "string",
+          "enum": ["Always", "IfNotPresent", "Never"]
+        }
+      }
+    },
+    "probe": {
+      "type": "object",
+      "required": ["enabled"],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "initialDelaySeconds": { "type": "integer", "minimum": 0 },
+        "timeoutSeconds": { "type": "integer", "minimum": 1 },
+        "periodSeconds": { "type": "integer", "minimum": 1 },
+        "failureThreshold": { "type": "integer", "minimum": 1 },
+        "successThreshold": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "resources": {
+      "type": "object",
+      "properties": {
+        "limits": { "type": "object" },
+        "requests": { "type": "object" }
+      },
+      "additionalProperties": false
+    },
+    "service": {
+      "type": "object",
+      "required": ["type", "tilePort", "monitoringPort"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["ClusterIP", "NodePort", "LoadBalancer", "ExternalName"]
+        },
+        "tilePort": { "type": "integer", "minimum": 1, "maximum": 65535 },
+        "monitoringPort": { "type": "integer", "minimum": 1, "maximum": 65535 },
+        "labels": { "type": "object" },
+        "annotations": { "type": "object" },
+        "headless": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "persistence": {
+      "type": "object",
+      "required": ["enabled"],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "existingClaim": { "type": "string" },
+        "size": { "type": "string" },
+        "accessMode": {
+          "type": "string",
+          "enum": ["ReadWriteOnce", "ReadOnlyMany", "ReadWriteMany", "ReadWriteOncePod"]
+        },
+        "storageClassName": { "type": "string" },
+        "keepOnDelete": { "type": "boolean" },
+        "annotations": { "type": "object" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "properties": {
+    "image": { "$ref": "#/definitions/image" },
+    "initContainerImage": { "$ref": "#/definitions/image" },
+    "nameOverride": { "type": "string" },
+    "fullnameOverride": { "type": "string" },
+    "leader": {
+      "type": "object",
+      "required": ["replicaCount", "service", "persistence", "resources"],
+      "properties": {
+        "replicaCount": { "type": "integer", "minimum": 0, "maximum": 1 },
+        "rolloutStrategy": { "type": "object" },
+        "revisionHistoryLimit": { "type": "integer", "minimum": 0 },
+        "terminationGracePeriodSeconds": { "type": "integer", "minimum": 0 },
+        "priorityClassName": { "type": "string" },
+        "topologySpreadConstraints": { "type": "array" },
+        "podAnnotations": { "type": "object" },
+        "podLabels": { "type": "object" },
+        "nodeSelector": { "type": "object" },
+        "tolerations": { "type": "array" },
+        "affinity": { "type": "object" },
+        "podSecurityContext": { "type": "object" },
+        "securityContext": { "type": "object" },
+        "config": {
+          "type": "object",
+          "required": ["enabled"],
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "configs": { "type": "object" }
+          },
+          "additionalProperties": false
+        },
+        "service": { "$ref": "#/definitions/service" },
+        "persistence": { "$ref": "#/definitions/persistence" },
+        "resources": { "$ref": "#/definitions/resources" },
+        "livenessProbe": { "$ref": "#/definitions/probe" },
+        "readinessProbe": { "$ref": "#/definitions/probe" },
+        "startupProbe": { "$ref": "#/definitions/probe" },
+        "extraFlags": { "type": "array" },
+        "extraArgs": { "type": "object" }
+      },
+      "additionalProperties": false
+    },
+    "followers": {
+      "type": "object",
+      "required": ["enabled", "replicaCount", "service", "persistence", "resources"],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "replicaCount": { "type": "integer", "minimum": 0 },
+        "rolloutStrategy": { "type": "object" },
+        "revisionHistoryLimit": { "type": "integer", "minimum": 0 },
+        "terminationGracePeriodSeconds": { "type": "integer", "minimum": 0 },
+        "priorityClassName": { "type": "string" },
+        "topologySpreadConstraints": { "type": "array" },
+        "podAnnotations": { "type": "object" },
+        "podLabels": { "type": "object" },
+        "nodeSelector": { "type": "object" },
+        "tolerations": { "type": "array" },
+        "affinity": { "type": "object" },
+        "podSecurityContext": { "type": "object" },
+        "securityContext": { "type": "object" },
+        "config": {
+          "type": "object",
+          "required": ["enabled"],
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "configs": { "type": "object" },
+            "existingSecret": { "type": "string" },
+            "existingSecretKey": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "service": { "$ref": "#/definitions/service" },
+        "persistence": { "$ref": "#/definitions/persistence" },
+        "resources": { "$ref": "#/definitions/resources" },
+        "livenessProbe": { "$ref": "#/definitions/probe" },
+        "readinessProbe": { "$ref": "#/definitions/probe" },
+        "startupProbe": { "$ref": "#/definitions/probe" },
+        "pdb": {
+          "type": "object",
+          "required": ["enabled"],
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "minAvailable": {
+              "oneOf": [
+                { "type": "string" },
+                { "type": "integer", "minimum": 0 }
+              ]
+            },
+            "maxUnavailable": {
+              "oneOf": [
+                { "type": "string" },
+                { "type": "integer", "minimum": 0 }
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "extraFlags": { "type": "array" },
+        "extraArgs": { "type": "object" }
+      },
+      "additionalProperties": false
+    },
+    "global": {
+      "type": "object",
+      "properties": {
+        "podSecurityContext": { "type": "object" },
+        "securityContext": { "type": "object" },
+        "podAnnotations": { "type": "object" },
+        "podLabels": { "type": "object" },
+        "imagePullSecrets": { "type": "array" },
+        "nodeSelector": { "type": "object" },
+        "tolerations": { "type": "array" },
+        "affinity": { "type": "object" }
+      },
+      "additionalProperties": false
+    },
+    "serviceAccount": {
+      "type": "object",
+      "required": ["create"],
+      "properties": {
+        "create": { "type": "boolean" },
+        "automount": { "type": "boolean" },
+        "annotations": { "type": "object" },
+        "name": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "serviceMonitor": {
+      "type": "object",
+      "required": ["enabled"],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "namespace": { "type": "string" },
+        "interval": { "type": "string" },
+        "scrapeTimeout": { "type": "string" },
+        "honorLabels": { "type": "boolean" },
+        "labels": { "type": "object" },
+        "metricRelabelings": { "type": "array" },
+        "relabelings": { "type": "array" }
+      },
+      "additionalProperties": false
+    },
+    "networkPolicy": {
+      "type": "object",
+      "required": ["enabled"],
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "from": { "type": "array" }
+      },
+      "additionalProperties": false
+    }
+  }
+}
