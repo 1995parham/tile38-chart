@@ -13,7 +13,8 @@ spec:
     - Ingress
     - Egress
   ingress:
-    {{- toYaml .Values.networkPolicy.from | nindent 4 }}
+    - from:
+        {{- toYaml .Values.networkPolicy.from | nindent 8 }}
   egress:
     # Followers need to reach the leader pod within the namespace.
     - to:
