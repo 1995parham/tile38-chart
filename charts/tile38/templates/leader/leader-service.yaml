@@ -3,11 +3,10 @@ kind: Service
 metadata:
   name: {{ include "tile38.fullname" . }}-leader
   labels:
-    {{- include "tile38.labels" . | nindent 4 }}
+    {{- include "tile38.componentLabels" (dict "ctx" . "component" "leader") | nindent 4 }}
     {{- with .Values.leader.service.labels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
-    role: leader
   {{- with .Values.leader.service.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
@@ -15,12 +14,13 @@ metadata:
 spec:
   type: {{ .Values.leader.service.type }}
   selector:
-    {{- include "tile38.selectorLabels" . | nindent 4 }}
-    role: leader
+    {{- include "tile38.componentSelectorLabels" (dict "ctx" . "component" "leader") | nindent 4 }}
   ports:
     - name: tile
       port: {{ .Values.leader.service.tilePort }}
       targetPort: tile
+      protocol: TCP
     - name: monitoring
       port: {{ .Values.leader.service.monitoringPort }}
       targetPort: monitoring
+      protocol: TCP

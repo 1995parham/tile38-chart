@@ -1,14 +1,16 @@
-{{- if and .Values.leader.persistence.enabled (not .Values.leader.persistence.existingClaim)  }}
+{{- if and .Values.leader.persistence.enabled (not .Values.leader.persistence.existingClaim) }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: {{ include "tile38.fullname" . }}-leader-pvc
   labels:
-    {{- include "tile38.labels" . | nindent 4 }}
-    role: leader
+    {{- include "tile38.componentLabels" (dict "ctx" . "component" "leader") | nindent 4 }}
   annotations:
     {{- if .Values.leader.persistence.keepOnDelete }}
     "helm.sh/resource-policy": keep
+    {{- end }}
+    {{- with .Values.leader.persistence.annotations }}
+    {{- toYaml . | nindent 4 }}
     {{- end }}
 spec:
   accessModes:

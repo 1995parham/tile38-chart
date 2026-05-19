@@ -3,31 +3,45 @@ kind: Deployment
 metadata:
   name: {{ include "tile38.fullname" . }}-leader
   labels:
-    {{- include "tile38.labels" . | nindent 4 }}
-    role: leader
+    {{- include "tile38.componentLabels" (dict "ctx" . "component" "leader") | nindent 4 }}
 spec:
   # Tile38 doesn't support multi master so replicas hardcoded.
-  replicas: 1
+  replicas: {{ .Values.leader.replicaCount }}
+  revisionHistoryLimit: {{ .Values.leader.revisionHistoryLimit }}
   selector:
     matchLabels:
-      {{- include "tile38.selectorLabels" . | nindent 6 }}
-      role: leader
-  {{- if .Values.leader.rollOutStrategy }}
-  strategy: 
-    {{- toYaml .Values.leader.rollOutStrategy | nindent 4 }}
+      {{- include "tile38.componentSelectorLabels" (dict "ctx" . "component" "leader") | nindent 6 }}
+  {{- with .Values.leader.rolloutStrategy }}
+  strategy:
+    {{- toYaml . | nindent 4 }}
   {{- end }}
   template:
     metadata:
       labels:
-        {{- include "tile38.labels" . | nindent 8 }}
-        role: leader
-      {{- with .Values.global.podAnnotations }}
-      annotations:
+        {{- include "tile38.componentLabels" (dict "ctx" . "component" "leader") | nindent 8 }}
+        {{- with .Values.global.podLabels }}
         {{- toYaml . | nindent 8 }}
-      {{- end }}
+        {{- end }}
+        {{- with .Values.leader.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/leader/leader-configmap.yaml") . | sha256sum }}
+        {{- with .Values.global.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.leader.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
     spec:
       serviceAccountName: {{ include "tile38.serviceAccountName" . }}
-      {{- with .Values.global.podSecurityContext }}
+      automountServiceAccountToken: {{ .Values.serviceAccount.automount }}
+      terminationGracePeriodSeconds: {{ .Values.leader.terminationGracePeriodSeconds }}
+      {{- with .Values.leader.priorityClassName }}
+      priorityClassName: {{ . }}
+      {{- end }}
+      {{- $podSec := default .Values.global.podSecurityContext .Values.leader.podSecurityContext }}
+      {{- with $podSec }}
       securityContext:
         {{- toYaml . | nindent 8 }}
       {{- end }}
@@ -39,8 +53,10 @@ spec:
       # We need to copy config before docker image runs.
       initContainers:
         - name: copy-config
-          image: busybox:1.36
-          {{- with .Values.global.securityContext }}
+          image: "{{ .Values.initContainerImage.repository }}:{{ .Values.initContainerImage.tag }}"
+          imagePullPolicy: {{ .Values.initContainerImage.pullPolicy }}
+          {{- $ctrSec := default .Values.global.securityContext .Values.leader.securityContext }}
+          {{- with $ctrSec }}
           securityContext:
             {{- toYaml . | nindent 12 }}
           {{- end }}
@@ -56,11 +72,12 @@ spec:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          {{- with .Values.global.securityContext }}
+          {{- $ctrSec := default .Values.global.securityContext .Values.leader.securityContext }}
+          {{- with $ctrSec }}
           securityContext:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          command: 
+          command:
             - tile38-server
           args:
             - -h
@@ -74,10 +91,10 @@ spec:
             - "0.0.0.0:{{ .Values.leader.service.monitoringPort }}"
             {{- end }}
             {{- range $key, $value := .Values.leader.extraArgs }}
-              - {{ printf "--%s=%s" (kebabcase $key) $value }}
+            - {{ printf "--%s=%s" (kebabcase $key) $value }}
             {{- end }}
             {{- range .Values.leader.extraFlags }}
-              - --{{ kebabcase . }}
+            - --{{ kebabcase . }}
             {{- end }}
           ports:
             - name: monitoring
@@ -86,18 +103,36 @@ spec:
             - name: tile
               containerPort: {{ .Values.leader.service.tilePort }}
               protocol: TCP
+          {{- if .Values.leader.livenessProbe.enabled }}
           livenessProbe:
             tcpSocket:
               port: tile
-            initialDelaySeconds: 30
-            timeoutSeconds: 1
-            periodSeconds: 10
+            initialDelaySeconds: {{ .Values.leader.livenessProbe.initialDelaySeconds }}
+            timeoutSeconds: {{ .Values.leader.livenessProbe.timeoutSeconds }}
+            periodSeconds: {{ .Values.leader.livenessProbe.periodSeconds }}
+            failureThreshold: {{ .Values.leader.livenessProbe.failureThreshold }}
+            successThreshold: {{ .Values.leader.livenessProbe.successThreshold }}
+          {{- end }}
+          {{- if .Values.leader.readinessProbe.enabled }}
           readinessProbe:
             tcpSocket:
               port: tile
-            initialDelaySeconds: 10
-            timeoutSeconds: 1
-            periodSeconds: 10
+            initialDelaySeconds: {{ .Values.leader.readinessProbe.initialDelaySeconds }}
+            timeoutSeconds: {{ .Values.leader.readinessProbe.timeoutSeconds }}
+            periodSeconds: {{ .Values.leader.readinessProbe.periodSeconds }}
+            failureThreshold: {{ .Values.leader.readinessProbe.failureThreshold }}
+            successThreshold: {{ .Values.leader.readinessProbe.successThreshold }}
+          {{- end }}
+          {{- if .Values.leader.startupProbe.enabled }}
+          startupProbe:
+            tcpSocket:
+              port: tile
+            initialDelaySeconds: {{ .Values.leader.startupProbe.initialDelaySeconds }}
+            timeoutSeconds: {{ .Values.leader.startupProbe.timeoutSeconds }}
+            periodSeconds: {{ .Values.leader.startupProbe.periodSeconds }}
+            failureThreshold: {{ .Values.leader.startupProbe.failureThreshold }}
+            successThreshold: {{ .Values.leader.startupProbe.successThreshold }}
+          {{- end }}
           resources:
             {{- toYaml .Values.leader.resources | nindent 12 }}
           volumeMounts:
@@ -107,18 +142,24 @@ spec:
             - name: config
               mountPath: /data/config
               subPath: config
-              readOnly: false
             {{- end }}
-      {{- with .Values.global.nodeSelector }}
+      {{- $nodeSelector := default .Values.global.nodeSelector .Values.leader.nodeSelector }}
+      {{- with $nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.global.affinity }}
+      {{- $affinity := default .Values.global.affinity .Values.leader.affinity }}
+      {{- with $affinity }}
       affinity:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- with .Values.global.tolerations }}
+      {{- $tolerations := default .Values.global.tolerations .Values.leader.tolerations }}
+      {{- with $tolerations }}
       tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.leader.topologySpreadConstraints }}
+      topologySpreadConstraints:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       volumes:
@@ -137,7 +178,7 @@ spec:
             items:
               - key: config
                 path: config
-            defaultMode: 0666
+            defaultMode: 0644
         - name: config
           emptyDir: {}
         {{- end }}
