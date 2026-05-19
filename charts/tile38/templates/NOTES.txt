@@ -3,13 +3,34 @@
 {{- $leaderServicePort := .Values.leader.service.tilePort -}}
 {{- $followerServicePort := .Values.followers.service.tilePort -}}
 
+Thank you for installing {{ .Chart.Name }} {{ .Chart.AppVersion }} (chart {{ .Chart.Version }}).
 
-Tile38 Leader can be accessed within the cluster on port {{ $leaderServicePort }} at {{ $fullName }}-leader.{{ $namespace }}.svc.cluster.local
+Tile38 leader is reachable in-cluster at:
+  {{ $fullName }}-leader.{{ $namespace }}.svc.cluster.local:{{ $leaderServicePort }}
 {{- if .Values.followers.enabled }}
-Followers are accessible on port {{ $followerServicePort }} at {{ $fullName }}-followers.{{ $namespace }}.svc.cluster.local
+
+Followers (read-only) are reachable at:
+  {{ $fullName }}-followers.{{ $namespace }}.svc.cluster.local:{{ $followerServicePort }}
+{{- if .Values.followers.persistence.enabled }}
+Per-pod DNS (headless) at:
+  <pod>.{{ $fullName }}-headless.{{ $namespace }}.svc.cluster.local:{{ $followerServicePort }}
+{{- end }}
 {{- end }}
 
-To connect to Tile38 from outside the cluster, you can use port-forwarding:
-  kubectl port-forward --namespace {{ $namespace }} svc/{{ $fullName }}-leader {{ $leaderServicePort }}:{{ $leaderServicePort }}
+To connect from outside the cluster:
+  kubectl --namespace {{ $namespace }} port-forward svc/{{ $fullName }}-leader {{ $leaderServicePort }}:{{ $leaderServicePort }}
+  tile38-cli -p {{ $leaderServicePort }} ping
 
-Then you can connect to Tile38 at localhost:{{ $leaderServicePort }}
+To verify the install:
+  helm test {{ .Release.Name }} --namespace {{ $namespace }}
+
+{{- if and (not .Values.leader.persistence.enabled) (eq .Values.leader.config.enabled true) }}
+
+WARNING: leader.persistence.enabled=false — data is stored in an emptyDir and will be lost when the pod restarts.
+{{- end }}
+{{- if and .Values.followers.enabled (not .Values.followers.config.configs.leaderauth) (not .Values.followers.config.existingSecret) }}
+
+NOTE: followers run without leader authentication. For production, set
+  followers.config.existingSecret  (preferred), or
+  followers.config.configs.leaderauth  (inline, less secure).
+{{- end }}
