@@ -1,0 +1,6 @@
+# Variant: leader only, no followers, no PDB, no PVC.
+leader:
+  persistence:
+    enabled: false
+followers:
+  enabled: false

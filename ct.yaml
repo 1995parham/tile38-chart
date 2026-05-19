@@ -1,0 +1,9 @@
+# helm/chart-testing configuration
+# https://github.com/helm/chart-testing
+chart-dirs:
+  - charts
+target-branch: main
+helm-extra-args: --timeout 600s
+# Version bump is performed as a separate release commit, so do not require
+# every commit that touches a chart to also bump the version.
+check-version-increment: false

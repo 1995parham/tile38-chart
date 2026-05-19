@@ -1,0 +1,26 @@
+# Variant: PDB + spread constraints + custom probes + network policy.
+leader:
+  persistence:
+    enabled: false
+  livenessProbe:
+    initialDelaySeconds: 5
+  startupProbe:
+    enabled: true
+    failureThreshold: 60
+followers:
+  enabled: true
+  replicaCount: 2
+  persistence:
+    enabled: false
+  pdb:
+    enabled: true
+    maxUnavailable: 1
+  topologySpreadConstraints:
+    - maxSkew: 1
+      topologyKey: kubernetes.io/hostname
+      whenUnsatisfiable: ScheduleAnyway
+      labelSelector:
+        matchLabels:
+          app.kubernetes.io/component: follower
+networkPolicy:
+  enabled: true

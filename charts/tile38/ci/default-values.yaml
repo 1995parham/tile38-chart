@@ -1,0 +1,10 @@
+# Used by chart-testing (ct install) for CI installs.
+# Keeps defaults but disables PVC so kind ephemeral storage works.
+leader:
+  persistence:
+    enabled: false
+followers:
+  enabled: true
+  replicaCount: 1
+  persistence:
+    enabled: false
