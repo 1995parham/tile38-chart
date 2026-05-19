@@ -6,10 +6,14 @@ description: Ultra Fast Geospatial Database & Geofencing Server
 home: https://tile38.com/
 sources:
   - https://github.com/tidwall/tile38
+  - https://github.com/1995parham/tile38-chart
 keywords:
   - tile38
   - geofencing
   - geospatial
+  - database
+  - leader-follower
+  - replication
 maintainers:
   - name: 1995parham
     url: https://github.com/1995parham
@@ -17,6 +21,55 @@ maintainers:
 
 type: application
 
-version: 0.5.0
+# Helm chart version (SemVer 2). Bump on every release.
+version: 0.6.0
 
+# Upstream Tile38 application version.
 appVersion: "1.37.0"
+
+# Minimum supported Kubernetes version. policy/v1 PodDisruptionBudget is GA at 1.21+.
+kubeVersion: ">=1.21.0-0"
+
+annotations:
+  # ArtifactHub metadata. See https://artifacthub.io/docs/topics/annotations/helm/
+  artifacthub.io/license: Apache-2.0
+  artifacthub.io/links: |
+    - name: Source (chart)
+      url: https://github.com/1995parham/tile38-chart
+    - name: Source (Tile38)
+      url: https://github.com/tidwall/tile38
+    - name: Documentation
+      url: https://tile38.com/
+  artifacthub.io/images: |
+    - name: tile38
+      image: tile38/tile38:1.37.0
+  artifacthub.io/containsSecurityUpdates: "false"
+  artifacthub.io/changes: |
+    - kind: fixed
+      description: Honor leader.rolloutStrategy (was unread due to typo)
+    - kind: fixed
+      description: Render follower headless Service only when needed
+    - kind: fixed
+      description: Wrap networkPolicy.from inside an ingress rule
+    - kind: fixed
+      description: Geospatial helm test assertion now matches Tile38 GeoJSON output
+    - kind: added
+      description: PodDisruptionBudget for followers
+    - kind: added
+      description: Configurable liveness, readiness, and startup probes
+    - kind: added
+      description: Configurable init-container image
+    - kind: added
+      description: topologySpreadConstraints, priorityClassName, terminationGracePeriodSeconds, revisionHistoryLimit
+    - kind: added
+      description: Component-level scheduling and security overrides (leader.*, followers.*)
+    - kind: added
+      description: Secret-backed leaderauth via followers.config.existingSecret
+    - kind: added
+      description: app.kubernetes.io/component label for leader/follower
+    - kind: added
+      description: values.schema.json for client-side values validation
+    - kind: changed
+      description: Hardened default securityContext (drop ALL caps, no privilege escalation, runAsNonRoot, RuntimeDefault seccomp)
+    - kind: changed
+      description: ConfigMap-driven pod restart on config change via checksum/config annotation
