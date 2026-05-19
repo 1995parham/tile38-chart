@@ -8,19 +8,46 @@ image:
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""
 
+# Image used by the init container that seeds the Tile38 config file.
+# Tile38 requires its config to live inside the data directory, so an
+# init container copies the ConfigMap-backed file into place before
+# the server starts.
+initContainerImage:
+  repository: busybox
+  tag: "1.36"
+  pullPolicy: IfNotPresent
+
 nameOverride: ""
 fullnameOverride: ""
 
 # leader settings
 leader:
+  # Tile38 doesn't support multi-leader so the value is fixed at 1.
+  # Exposed as a value only so it can be temporarily scaled to 0 for maintenance.
   replicaCount: 1
   rolloutStrategy: {}
+  # Keep N previous ReplicaSets for rollback.
+  revisionHistoryLimit: 10
+  terminationGracePeriodSeconds: 30
+  priorityClassName: ""
+  topologySpreadConstraints: []
+  podAnnotations: {}
+  podLabels: {}
+  # Per-component overrides for scheduling/security. When unset the chart falls
+  # back to the matching `global.*` value, preserving prior behavior.
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  podSecurityContext: {}
+  securityContext: {}
+
   # leader config (if using mounted config file)
   config:
     enabled: true  # if false, will use default values
     # See all available configs from https://tile38.com/topics/configuration#configuration-file
+    # NOTE: Tile38 config keys are kebab-case (e.g. "protected-mode"), not camelCase.
     configs:
-      protectedMode: "no"
+      protected-mode: "no"
 
   # service customization for leader
   service:
@@ -44,6 +71,7 @@ leader:
     accessMode: ReadWriteOnce
     storageClassName: ""                # e.g. "standard" or leave empty for default
     keepOnDelete: true              # when true adds helm.sh/resource-policy: keep annotation
+    annotations: {}
   resources:
     # Default resource limits for Tile38. Adjust these based on your workload requirements.
     # For production environments with heavy geospatial operations, consider increasing these values.
@@ -53,6 +81,29 @@ leader:
     requests:
       cpu: 100m
       memory: 128Mi
+
+  # Configurable probes. Set `enabled: false` to disable an individual probe.
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 30
+    timeoutSeconds: 1
+    periodSeconds: 10
+    failureThreshold: 3
+    successThreshold: 1
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 10
+    timeoutSeconds: 1
+    periodSeconds: 10
+    failureThreshold: 3
+    successThreshold: 1
+  startupProbe:
+    enabled: false
+    initialDelaySeconds: 0
+    timeoutSeconds: 1
+    periodSeconds: 10
+    failureThreshold: 30
+    successThreshold: 1
 
   # -- A list of flags to pass to `tile38-server` command. Items must be camelcase. Helm will turn them to kebabcase style.
   # See all available flags in https://tile38.com/topics/configuration#configuration-file
@@ -65,19 +116,37 @@ leader:
 # followers settings
 followers:
   enabled: true
-  # how many follower replicas to run (Deployment replicas)
+  # how many follower replicas to run
   replicaCount: 2
-  # rolloutStrategy for persistent.enabled = true, strategy for persistent.enabled = false
+  # updateStrategy for persistence.enabled = true (StatefulSet), strategy for persistence.enabled = false (Deployment)
   rolloutStrategy: {}
+  revisionHistoryLimit: 10
+  terminationGracePeriodSeconds: 30
+  priorityClassName: ""
+  topologySpreadConstraints: []
+  podAnnotations: {}
+  podLabels: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  podSecurityContext: {}
+  securityContext: {}
+
   # follower config used to create /data/config via ConfigMap
   config:
     enabled: true  # if false, will use default values
     configs:
       follow_host: ""             # defaults to <fullname>-leader when empty
       follow_port: 9851
-      leaderauth: ""              # password for leader if required (prefer Secret in production)
+      # Prefer setting `leaderauth` via an existing Secret (see below) over inlining the password.
+      leaderauth: ""
       read_only: true
-      protectedMode: "no"
+      protected-mode: "no"
+    # When set, the chart reads the leader password from the named Secret/key
+    # and injects it as the `leaderauth` config entry, instead of writing it
+    # into the ConfigMap in plaintext.
+    existingSecret: ""
+    existingSecretKey: leaderauth
 
   # service customization for followers
   service:
@@ -88,7 +157,9 @@ followers:
       # e.g. app-tier: readers
     annotations: {}
       # e.g. cloud.google.com/load-balancer-type: "Internal"
-    headless: false  # if true creates a headless followers-headless service for DNS per pod
+    # Headless service is always rendered when persistence is enabled (required by StatefulSet).
+    # Set this to true to also render it for the Deployment mode (per-pod DNS).
+    headless: false
 
   # if enabled, StatefulSet will be created, else Deployment
   persistence:
@@ -97,6 +168,7 @@ followers:
     accessMode: "ReadWriteOnce"
     storageClassName: ""  # e.g. "standard" or leave empty for default
     keepOnDelete: true
+    annotations: {}
 
   resources:
     # Default resource limits for Tile38. Adjust these based on your workload requirements.
@@ -108,23 +180,63 @@ followers:
       cpu: 100m
       memory: 128Mi
 
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 30
+    timeoutSeconds: 1
+    periodSeconds: 10
+    failureThreshold: 3
+    successThreshold: 1
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 10
+    timeoutSeconds: 1
+    periodSeconds: 10
+    failureThreshold: 3
+    successThreshold: 1
+  startupProbe:
+    enabled: false
+    initialDelaySeconds: 0
+    timeoutSeconds: 1
+    periodSeconds: 10
+    failureThreshold: 30
+    successThreshold: 1
+
+  # PodDisruptionBudget for followers, useful to keep read availability during voluntary disruptions.
+  pdb:
+    enabled: false
+    # Set at most one of minAvailable / maxUnavailable.
+    minAvailable: ""
+    maxUnavailable: 1
+
   # -- A list of flags to pass to `tile38-server` command. Items must be camelcase. Helm will turn them to kebabcase style.
-  # See all available flags in https://tile38.com/topics/configuration#configuration-file
   extraFlags: []
 
   # -- A map of arguments and values to pass to the `tile38-server` command. Keys must be camelcase. Helm will turn them to kebabcase style.
-  # See all available args in https://tile38.com/topics/configuration#configuration-file
   extraArgs: {}
 
+# Cluster-wide defaults inherited by both leader and follower when their
+# component-level field is empty.
 global:
   podSecurityContext:
     fsGroup: 1000
+    runAsNonRoot: true
+    runAsUser: 1000
+    seccompProfile:
+      type: RuntimeDefault
 
+  # Container-level securityContext. Tile38 only needs basic FS access on /data
+  # and writes back to its own config file, so readOnlyRootFilesystem stays off.
   securityContext:
     runAsUser: 1000
     runAsNonRoot: true
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
 
   podAnnotations: {}
+  podLabels: {}
 
   imagePullSecrets: []
 
@@ -137,6 +249,9 @@ global:
 serviceAccount:
   # Specifies whether a service account should be created
   create: true
+  # Automatically mount API credentials into the pod. Tile38 does not talk to
+  # the Kubernetes API, so default to false to follow least-privilege.
+  automount: false
   # Annotations to add to the service account
   annotations: {}
   # The name of the service account to use.
@@ -149,6 +264,7 @@ serviceMonitor:
   interval: 30s
   scrapeTimeout: 10s
   honorLabels: false
+  labels: {}
   metricRelabelings: []
   relabelings: []
 
