@@ -1,8 +1,14 @@
-# Tile38 Helm Chart
+<h1 align="center">Tile38 Helm Chart</h1>
 
-![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/1995parham/tile38-chart/test.yaml?label=test&logo=github&style=for-the-badge&branch=main)
-![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/1995parham/tile38-chart/release.yaml?label=release&logo=github&style=for-the-badge&branch=main)
-[![Artifact Hub](https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/tile38&style=for-the-badge)](https://artifacthub.io/packages/search?repo=tile38)
+<p align="center">
+  <img src="banner.jpg" alt="Banner" />
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/github/actions/workflow/status/1995parham/tile38-chart/test.yaml?label=test&logo=github&style=for-the-badge&branch=main" alt="GitHub Workflow Status" />
+  <img src="https://img.shields.io/github/actions/workflow/status/1995parham/tile38-chart/release.yaml?label=release&logo=github&style=for-the-badge&branch=main" alt="GitHub Workflow Status" />
+  <a href="https://artifacthub.io/packages/search?repo=tile38"><img src="https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/tile38&style=for-the-badge" alt="Artifact Hub" /></a>
+</p>
 
 ## Introduction
 
