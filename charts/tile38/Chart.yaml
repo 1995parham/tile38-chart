@@ -22,10 +22,10 @@ maintainers:
 type: application
 
 # Helm chart version (SemVer 2). Bump on every release.
-version: 0.6.0
+version: 0.6.1
 
 # Upstream Tile38 application version.
-appVersion: "1.37.0"
+appVersion: "1.38.0"
 
 # Minimum supported Kubernetes version. policy/v1 PodDisruptionBudget is GA at 1.21+.
 kubeVersion: ">=1.21.0-0"
