@@ -22,7 +22,7 @@ jobs:
           python-version: "3.13"
 
       - name: set up chart-testing
-        uses: helm/chart-testing-action@v2.8.0
+        uses: helm/chart-testing-action@v2.9.0
 
       - name: list changed charts
         id: list-changed
