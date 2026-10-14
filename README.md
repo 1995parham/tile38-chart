@@ -77,7 +77,7 @@ Configuration values follow the structure of `values.yaml`. Below are the highli
 | `image.tag`                   | Image tag (defaults to `appVersion`)   | `""`            |
 | `image.pullPolicy`            | Image pull policy                      | `IfNotPresent`  |
 | `initContainerImage.repository` | Init container that seeds the config | `busybox`       |
-| `initContainerImage.tag`      | Init container tag                     | `1.36`          |
+| `initContainerImage.tag`      | Init container tag                     | `1.38`          |
 
 ### Leader
 

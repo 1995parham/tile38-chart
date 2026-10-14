@@ -42,7 +42,7 @@ annotations:
       url: https://tile38.com/
   artifacthub.io/images: |
     - name: tile38
-      image: tile38/tile38:1.37.0
+      image: tile38/tile38:1.38.0
   artifacthub.io/containsSecurityUpdates: "false"
   artifacthub.io/changes: |
     - kind: fixed

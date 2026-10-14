@@ -14,7 +14,7 @@ image:
 # the server starts.
 initContainerImage:
   repository: busybox
-  tag: "1.36"
+  tag: "1.38"
   pullPolicy: IfNotPresent
 
 nameOverride: ""
